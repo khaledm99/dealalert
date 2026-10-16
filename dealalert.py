@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 import os
 import requests
-from pprint import pprint
 import time
 import json
 from enum import IntEnum
@@ -13,6 +12,7 @@ ITAD_API_KEY = os.getenv('ITAD_API_KEY')
 DISCORD_WEBHOOK = os.getenv('DISCORD_WEBHOOK')
 
 
+# Assigns names to ITAD shop codes
 class Shops(IntEnum):
     EPIC        = 16
     GOG         = 35
@@ -21,6 +21,8 @@ class Shops(IntEnum):
     STEAM       = 61
 
 
+# Retrieves steamid's and game names for user wishlist
+# Caches in local file to prevent flooding Steam's API every time
 def get_wishlist(steamid: str) -> dict:
 
     try:
@@ -63,6 +65,7 @@ def get_wishlist(steamid: str) -> dict:
     return names
 
 
+# Gets ITAD hex uuid by querying with steam app steamid
 def get_itad_id(steamid: str) -> str:
 
     ITAD_URL = 'https://api.isthereanydeal.com/games/lookup/v1'
@@ -94,6 +97,8 @@ def get_itad_shop_codes():
     return response.json()
 
 
+# Takes a list of ITAD hex uuid's and returns all currently
+# active sale details
 def get_itad_deals(ids: list[str]):
 
     payload = ids
@@ -140,6 +145,9 @@ if __name__ == '__main__':
 
     wishlist = get_wishlist(STEAM_ID)
     itad_ids = {}
+
+    # Retrieve ITAD game ID's, caching in a local file to reduce need
+    # to constantly query the API
     try:
         with open('itad_ids.json', mode='r', encoding='utf-8') as f:
             itad_ids = json.load(f)
@@ -151,6 +159,7 @@ if __name__ == '__main__':
         with open('itad_ids.json', mode='w', encoding='utf-8') as f:
             json.dump(itad_ids, f)
 
+    # We use another dictionary to reverse lookup steamid's from ITAD id's
     inverse_itad_ids = {v: k for k, v in itad_ids.items()}
 
     id_list = [i for i in itad_ids.values()][:10]
@@ -161,6 +170,5 @@ if __name__ == '__main__':
         name = wishlist.get(steamid)
         deal_strings.append(construct_deals_string(d, name))
     final_string = "".join(deal_strings)
-    print(final_string)
     send_deals_to_discord(final_string)
 
