@@ -49,7 +49,7 @@ def get_wishlist(steamid: str) -> dict:
     for i in items:
         print(f'Getting item {n}/{len(items)}')
         appid = str(i.get('appid'))
-        time.sleep(3)
+        time.sleep(1)
         try:
             response = requests.get(APPID_LOOKUP_URL, params={'appids': appid})
             response.raise_for_status()
