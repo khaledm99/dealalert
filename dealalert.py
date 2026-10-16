@@ -4,7 +4,7 @@ import requests
 from pprint import pprint
 import time
 import json
-from enum import Enum
+from enum import IntEnum
 
 load_dotenv()
 
@@ -12,7 +12,7 @@ STEAM_ID = os.getenv('STEAM_ID')
 ITAD_API_KEY = os.getenv('ITAD_API_KEY')
 
 
-class Shops(Enum):
+class Shops(IntEnum):
     EPIC        = 16
     GOG         = 35
     MICROSOFT   = 48
@@ -93,15 +93,15 @@ def get_itad_shop_codes():
     return response.json()
 
 
-def get_itad_deals(ids: list(str)):
+def get_itad_deals(ids: list[str]):
 
-    payload = json.dumps(ids)
-    SHOPS = [Shops.STEAM, Shops.GOG, Shops.MICROSOFT, Shops.EPIC, Shops.NEWEGG]
-    ITAD_PRICE_URL = 'https://api.isthereanydeal.com/games/overview/v2'
+    payload = ids
+    print(payload)
+    raw_query_string = f'country=CA&deals=true&shops={Shops.STEAM},{Shops.GOG},{Shops.MICROSOFT},{Shops.EPIC},{Shops.NEWEGG}'
+    ITAD_PRICE_URL = 'https://api.isthereanydeal.com/games/prices/v3'
     try:
         response = requests.post(ITAD_PRICE_URL,
-                                 params={'country': 'CA',
-                                         'shops': SHOPS},
+                                 params=raw_query_string,
                                  headers={'ITAD-API-Key': ITAD_API_KEY},
                                  json=payload)
         response.raise_for_status()
@@ -109,6 +109,20 @@ def get_itad_deals(ids: list(str)):
         print(e)
         return
     return response.json()
+
+
+def print_deals(deals, game_name):
+    print(f'Game: {game_name}')
+    for d in deals.get('deals'):
+        print(f'    Shop: {d.get('shop').get('name')}')
+        print(f'    Current Price: {d.get('price').get('amount')}')
+        print(f'    Regular Price: {d.get('regular').get('amount')}')
+        print(f'    Discount: {d.get('cut')}%')
+        print(f'    URL: {d.get('url')}')
+        print('------------------------')
+    print(f'Lowest: {deals.get('historyLow').get('all').get('amount')}')
+    print('############################')
+
 
 
 if __name__ == '__main__':
@@ -127,3 +141,12 @@ if __name__ == '__main__':
             json.dump(itad_ids, f)
 
     pprint(itad_ids)
+    inverse_itad_ids = {v: k for k, v in itad_ids.items()}
+
+    id_list = [i for i in itad_ids.values()][:5]
+    deals = get_itad_deals(id_list)
+    for d in deals:
+        steamid = inverse_itad_ids.get(d.get('id'))
+        name = wishlist.get(steamid)
+        print_deals(d, name)
+
