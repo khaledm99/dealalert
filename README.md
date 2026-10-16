@@ -4,7 +4,7 @@ Pulls a user's Steam wishlist and queries the IsThereADeal public API to get cur
 active deals on every game in the wishlist.
 
 All API queries are done via the requests module. Steam wishlist is cached in a local
-JSON file, as well as the IsThereADeal game ID's to reduce the amount of mass API
+JSON file, as well as the IsThereAnyDeal game ID's to reduce the amount of mass API
 queries from large wishlists.
 
 Uses a discord webhook to send a formatted message containing today's deals complete with
@@ -12,7 +12,7 @@ current price, discount percentage, historical low, and link to store pages for 
 
 To run, requires the following environment variables:
 STEAM_ID: User steamid to retrieve wishlist
-ITAD_API_KEY: API key from IsThereADeal
+ITAD_API_KEY: API key from IsThereAnyDeal
 DISCORD_WEBHOOK: Discord channel webhook link
 
 Usage:
