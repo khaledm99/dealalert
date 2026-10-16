@@ -1,6 +1,6 @@
 # DealAlert
 Python script to retrieve today's PC video game deals from a variety of storefronts.
-Pulls a user's Steam wishlist and queries the IsThereADeal public API to get currently
+Pulls a user's Steam wishlist and queries the IsThereAnyDeal public API to get currently
 active deals on every game in the wishlist.
 
 All API queries are done via the requests module. Steam wishlist is cached in a local
