@@ -2,7 +2,7 @@ name: Run daily python script
 
 on:
   schedule:
-    - cron: 0 22 * * * *
+    - cron: 0 22 * * * 
       timezone: "America/Edmonton"
   workflow_dispatch: 
 
