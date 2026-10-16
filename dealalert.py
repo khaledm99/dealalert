@@ -10,6 +10,7 @@ load_dotenv()
 
 STEAM_ID = os.getenv('STEAM_ID')
 ITAD_API_KEY = os.getenv('ITAD_API_KEY')
+DISCORD_WEBHOOK = os.getenv('DISCORD_WEBHOOK')
 
 
 class Shops(IntEnum):
@@ -96,7 +97,6 @@ def get_itad_shop_codes():
 def get_itad_deals(ids: list[str]):
 
     payload = ids
-    print(payload)
     raw_query_string = f'country=CA&deals=true&shops={Shops.STEAM},{Shops.GOG},{Shops.MICROSOFT},{Shops.EPIC},{Shops.NEWEGG}'
     ITAD_PRICE_URL = 'https://api.isthereanydeal.com/games/prices/v3'
     try:
@@ -111,18 +111,29 @@ def get_itad_deals(ids: list[str]):
     return response.json()
 
 
-def print_deals(deals, game_name):
-    print(f'Game: {game_name}')
+def construct_deals_string(deals, game_name):
+    s = ''
+    s += f'Game: {game_name}\n'
     for d in deals.get('deals'):
-        print(f'    Shop: {d.get('shop').get('name')}')
-        print(f'    Current Price: {d.get('price').get('amount')}')
-        print(f'    Regular Price: {d.get('regular').get('amount')}')
-        print(f'    Discount: {d.get('cut')}%')
-        print(f'    URL: {d.get('url')}')
-        print('------------------------')
-    print(f'Lowest: {deals.get('historyLow').get('all').get('amount')}')
-    print('############################')
+        s += f'    Shop: {d.get('shop').get('name')}\n'
+        s += f'    Current Price: {d.get('price').get('amount')}\n'
+        s += f'    Regular Price: {d.get('regular').get('amount')}\n'
+        s += f'    Discount: {d.get('cut')}%\n'
+        s += f'    URL: {d.get('url')}\n'
+        s += '------------------------\n'
+    s += f'Lowest: {deals.get('historyLow').get('all').get('amount')}\n'
+    s += '############################\n'
+    return s
 
+
+def send_deals_to_discord(deals):
+
+    try:
+        response = requests.post(DISCORD_WEBHOOK, json={'content': deals}, headers={'Content-Type': 'application/json'})
+        response.raise_for_status()
+    except Exception as e:
+        print(e)
+    print(response.text)
 
 
 if __name__ == '__main__':
@@ -140,13 +151,16 @@ if __name__ == '__main__':
         with open('itad_ids.json', mode='w', encoding='utf-8') as f:
             json.dump(itad_ids, f)
 
-    pprint(itad_ids)
     inverse_itad_ids = {v: k for k, v in itad_ids.items()}
 
-    id_list = [i for i in itad_ids.values()][:5]
+    id_list = [i for i in itad_ids.values()][:10]
     deals = get_itad_deals(id_list)
+    deal_strings = []
     for d in deals:
         steamid = inverse_itad_ids.get(d.get('id'))
         name = wishlist.get(steamid)
-        print_deals(d, name)
+        deal_strings.append(construct_deals_string(d, name))
+    final_string = "".join(deal_strings)
+    print(final_string)
+    send_deals_to_discord(final_string)
 
