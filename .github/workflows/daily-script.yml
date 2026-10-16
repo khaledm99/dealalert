@@ -1,0 +1,29 @@
+name: Run daily python script
+
+on:
+  schedule:
+    - cron: 0 22 * * * *
+      timezone: "America/Edmonton"
+  workflow-dispatch: 
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo code
+        uses: actions/checkout@v4
+
+      - name: Setup python
+        uses: actions/setup-python@v5
+
+      - name: Install dependencies
+        run: |
+          python -m install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt;
+
+      - name: Run script
+        env:
+          STEAM_ID: ${{ secrets.STEAM_ID }}
+          ITAD_API_KEY: ${{ secrets.ITAD_API_KEY }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: python dealalert.py
